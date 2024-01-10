@@ -20,24 +20,36 @@ class RTCVideoFrame : public RefCountInterface {
   LIB_WEBRTC_API static scoped_refptr<RTCVideoFrame> Create(
       int width, int height, const uint8_t* buffer, int length);
 
+  LIB_WEBRTC_API static scoped_refptr<RTCVideoFrame> Create(int width,
+                                                            int height);
+
   LIB_WEBRTC_API static scoped_refptr<RTCVideoFrame> Create(
       int width, int height, const uint8_t* data_y, int stride_y,
       const uint8_t* data_u, int stride_u, const uint8_t* data_v, int stride_v);
 
   virtual scoped_refptr<RTCVideoFrame> Copy() = 0;
 
+  virtual uint16_t id() const = 0;
+  virtual void set_id(uint16_t id) = 0;
   // The resolution of the frame in pixels. For formats where some planes are
   // subsampled, this is the highest-resolution plane.
   virtual int width() const = 0;
   virtual int height() const = 0;
 
   virtual VideoRotation rotation() = 0;
+  virtual int64_t timestamp_us() const = 0;
+  virtual void set_timestamp_us(int64_t timestamp_us) = 0;
 
   // Returns pointer to the pixel data for a given plane. The memory is owned by
   // the VideoFrameBuffer object and must not be freed by the caller.
   virtual const uint8_t* DataY() const = 0;
+  virtual uint8_t* DataY() = 0;
+
   virtual const uint8_t* DataU() const = 0;
+  virtual uint8_t* DataU() = 0;
+
   virtual const uint8_t* DataV() const = 0;
+  virtual uint8_t* DataV() = 0;
 
   // Returns the number of bytes between successive rows for a given plane.
   virtual int StrideY() const = 0;

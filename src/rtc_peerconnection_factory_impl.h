@@ -11,6 +11,7 @@
 #include "rtc_peerconnection.h"
 #include "rtc_peerconnection_factory.h"
 #include "rtc_video_device_impl.h"
+#include "rtc_video_producer_impl.h"
 
 #ifdef RTC_DESKTOP_DEVICE
 #include "rtc_desktop_capturer_impl.h"
@@ -45,7 +46,12 @@ class RTCPeerConnectionFactoryImpl : public RTCPeerConnectionFactory {
 
   virtual scoped_refptr<RTCVideoSource> CreateVideoSource(
       scoped_refptr<RTCVideoCapturer> capturer, const string video_source_label,
-      scoped_refptr<RTCMediaConstraints> constraints) override;
+      scoped_refptr<RTCMediaConstraints> constraints,
+      scoped_refptr<RTCVideoProcessor> processor = nullptr) override;
+
+  virtual scoped_refptr<RTCVideoProducer> CreateVideoProducer() override;
+  virtual scoped_refptr<RTCVideoSource> CreateVideoSource(
+      scoped_refptr<RTCVideoProducer> producer) override;
 #ifdef RTC_DESKTOP_DEVICE
   virtual scoped_refptr<RTCDesktopDevice> GetDesktopDevice() override;
   virtual scoped_refptr<RTCVideoSource> CreateDesktopSource(
@@ -82,7 +88,8 @@ class RTCPeerConnectionFactoryImpl : public RTCPeerConnectionFactory {
 
   scoped_refptr<RTCVideoSource> CreateVideoSource_s(
       scoped_refptr<RTCVideoCapturer> capturer, const char* video_source_label,
-      scoped_refptr<RTCMediaConstraints> constraints);
+      scoped_refptr<RTCMediaConstraints> constraints,
+      scoped_refptr<RTCVideoProcessor> processor);
 #ifdef RTC_DESKTOP_DEVICE
   scoped_refptr<RTCVideoSource> CreateDesktopSource_d(
       scoped_refptr<RTCDesktopCapturer> capturer,

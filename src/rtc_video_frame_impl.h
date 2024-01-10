@@ -19,16 +19,24 @@ class VideoFrameBufferImpl : public RTCVideoFrame {
 
   scoped_refptr<RTCVideoFrame> Copy() override;
 
+  static scoped_refptr<RTCVideoFrame> Create(
+      const rtc::scoped_refptr<webrtc::VideoFrameBuffer> frame_buffer);
+
  public:
+  uint16_t id() const override;
+  void set_id(uint16_t id) override;
   int width() const override;
 
   int height() const override;
 
   const uint8_t* DataY() const override;
+  uint8_t* DataY() override;
 
   const uint8_t* DataU() const override;
+  uint8_t* DataU() override;
 
   const uint8_t* DataV() const override;
+  uint8_t* DataV() override;
 
   int StrideY() const override;
 
@@ -42,17 +50,20 @@ class VideoFrameBufferImpl : public RTCVideoFrame {
   rtc::scoped_refptr<webrtc::VideoFrameBuffer> buffer() { return buffer_; }
 
   // System monotonic clock, same timebase as rtc::TimeMicros().
-  int64_t timestamp_us() const { return timestamp_us_; }
-  void set_timestamp_us(int64_t timestamp_us) { timestamp_us_ = timestamp_us; }
+  int64_t timestamp_us() const override { return timestamp_us_; }
+  void set_timestamp_us(int64_t timestamp_us) override {
+    timestamp_us_ = timestamp_us;
+  }
 
   virtual RTCVideoFrame::VideoRotation rotation() override;
 
-  webrtc::VideoRotation rotation() const { return rotation_; }
+  webrtc::VideoRotation rotationRTC() const { return rotation_; }
 
   void set_rotation(webrtc::VideoRotation rotation) { rotation_ = rotation; }
 
  private:
   rtc::scoped_refptr<webrtc::VideoFrameBuffer> buffer_;
+  uint16_t id_ = 0;
   int64_t timestamp_us_ = 0;
   webrtc::VideoRotation rotation_ = webrtc::kVideoRotation_0;
 };

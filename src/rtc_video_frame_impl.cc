@@ -25,6 +25,10 @@ scoped_refptr<RTCVideoFrame> VideoFrameBufferImpl::Copy() {
   return frame;
 }
 
+uint16_t VideoFrameBufferImpl::id() const { return id_; }
+
+void VideoFrameBufferImpl::set_id(uint16_t id) { id_ = id; }
+
 int VideoFrameBufferImpl::width() const { return buffer_->width(); }
 
 int VideoFrameBufferImpl::height() const { return buffer_->height(); }
@@ -33,12 +37,24 @@ const uint8_t* VideoFrameBufferImpl::DataY() const {
   return buffer_->GetI420()->DataY();
 }
 
+uint8_t* VideoFrameBufferImpl::DataY() {
+  return const_cast<uint8_t*>(buffer_->GetI420()->DataY());
+}
+
 const uint8_t* VideoFrameBufferImpl::DataU() const {
   return buffer_->GetI420()->DataU();
 }
 
+uint8_t* VideoFrameBufferImpl::DataU() {
+  return const_cast<uint8_t*>(buffer_->GetI420()->DataU());
+}
+
 const uint8_t* VideoFrameBufferImpl::DataV() const {
   return buffer_->GetI420()->DataV();
+}
+
+uint8_t* VideoFrameBufferImpl::DataV() {
+  return const_cast<uint8_t*>(buffer_->GetI420()->DataV());
 }
 
 int VideoFrameBufferImpl::StrideY() const {
@@ -110,6 +126,13 @@ libwebrtc::RTCVideoFrame::VideoRotation VideoFrameBufferImpl::rotation() {
   }
   return RTCVideoFrame::kVideoRotation_0;
 }
+scoped_refptr<RTCVideoFrame> VideoFrameBufferImpl::Create(
+    const rtc::scoped_refptr<webrtc::VideoFrameBuffer> frame_buffer) {
+  scoped_refptr<VideoFrameBufferImpl> frame =
+      scoped_refptr<VideoFrameBufferImpl>(
+          new RefCountedObject<VideoFrameBufferImpl>(frame_buffer));
+  return frame;
+}
 
 scoped_refptr<RTCVideoFrame> RTCVideoFrame::Create(int width, int height,
                                                    const uint8_t* buffer,
@@ -133,6 +156,14 @@ scoped_refptr<RTCVideoFrame> RTCVideoFrame::Create(int width, int height,
   scoped_refptr<VideoFrameBufferImpl> frame =
       scoped_refptr<VideoFrameBufferImpl>(
           new RefCountedObject<VideoFrameBufferImpl>(i420_buffer));
+  return frame;
+}
+
+scoped_refptr<RTCVideoFrame> RTCVideoFrame::Create(int width, int height) {
+  auto buffer = webrtc::I420Buffer::Create(width, height);
+  scoped_refptr<VideoFrameBufferImpl> frame =
+      scoped_refptr<VideoFrameBufferImpl>(
+          new RefCountedObject<VideoFrameBufferImpl>(buffer));
   return frame;
 }
 

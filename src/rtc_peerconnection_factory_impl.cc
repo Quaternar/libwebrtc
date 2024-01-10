@@ -14,6 +14,7 @@
 #include "rtc_rtp_capabilities_impl.h"
 #include "rtc_video_device_impl.h"
 #include "rtc_video_source_impl.h"
+#include "src/internal/video_capturer_wrapper.h"
 #if defined(USE_INTEL_MEDIA_SDK)
 #include "src/win/mediacapabilities.h"
 #include "src/win/msdkvideodecoderfactory.h"
@@ -176,31 +177,69 @@ RTCPeerConnectionFactoryImpl::GetDesktopDevice() {
 
 scoped_refptr<RTCVideoSource> RTCPeerConnectionFactoryImpl::CreateVideoSource(
     scoped_refptr<RTCVideoCapturer> capturer, const string video_source_label,
-    scoped_refptr<RTCMediaConstraints> constraints) {
+    scoped_refptr<RTCMediaConstraints> constraints,
+    scoped_refptr<RTCVideoProcessor> processor) {
   if (rtc::Thread::Current() != signaling_thread_.get()) {
     scoped_refptr<RTCVideoSource> source = signaling_thread_->BlockingCall(
-        [this, capturer, video_source_label, constraints] {
-          return CreateVideoSource_s(
-              capturer, to_std_string(video_source_label).c_str(), constraints);
+        [this, capturer, video_source_label, constraints, processor] {
+          return CreateVideoSource_s(capturer,
+                                     to_std_string(video_source_label).c_str(),
+                                     constraints, processor);
         });
     return source;
   }
 
-  return CreateVideoSource_s(
-      capturer, to_std_string(video_source_label).c_str(), constraints);
+  return CreateVideoSource_s(capturer,
+                             to_std_string(video_source_label).c_str(),
+                             constraints, processor);
 }
 
 scoped_refptr<RTCVideoSource> RTCPeerConnectionFactoryImpl::CreateVideoSource_s(
     scoped_refptr<RTCVideoCapturer> capturer, const char* video_source_label,
-    scoped_refptr<RTCMediaConstraints> constraints) {
+    scoped_refptr<RTCMediaConstraints> constraints,
+    scoped_refptr<RTCVideoProcessor> processor) {
   RTCVideoCapturerImpl* capturer_impl =
       static_cast<RTCVideoCapturerImpl*>(capturer.get());
+  std::shared_ptr<rtc::VideoSourceInterface<webrtc::VideoFrame>>
+      video_capturer = capturer_impl->video_capturer();
+
   /*RTCMediaConstraintsImpl* media_constraints =
           static_cast<RTCMediaConstraintsImpl*>(constraints.get());*/
+
+  if (processor) {
+    std::shared_ptr<rtc::VideoSourceInterface<webrtc::VideoFrame>> wrapped =
+        std::make_shared<webrtc::internal::VideoCapturerWrapper>(
+            processor, video_capturer);
+    video_capturer = wrapped;
+  }
+
   rtc::scoped_refptr<webrtc::VideoTrackSourceInterface> rtc_source_track =
       rtc::scoped_refptr<webrtc::VideoTrackSourceInterface>(
           new rtc::RefCountedObject<webrtc::internal::CapturerTrackSource>(
-              capturer_impl->video_capturer()));
+              video_capturer));
+
+  scoped_refptr<RTCVideoSourceImpl> source = scoped_refptr<RTCVideoSourceImpl>(
+      new RefCountedObject<RTCVideoSourceImpl>(rtc_source_track));
+  return source;
+}
+
+scoped_refptr<RTCVideoProducer>
+RTCPeerConnectionFactoryImpl::CreateVideoProducer() {
+  scoped_refptr<RTCVideoProducer> producer =
+      scoped_refptr<RTCVideoProducerImpl>(
+          new RefCountedObject<RTCVideoProducerImpl>());
+  return producer;
+}
+scoped_refptr<RTCVideoSource> RTCPeerConnectionFactoryImpl::CreateVideoSource(
+    scoped_refptr<RTCVideoProducer> producer) {
+  RTCVideoProducerImpl* producer_impl =
+      static_cast<RTCVideoProducerImpl*>(producer.get());
+
+  rtc::scoped_refptr<webrtc::VideoTrackSourceInterface> rtc_source_track =
+      rtc::scoped_refptr<webrtc::VideoTrackSourceInterface>(
+          new rtc::RefCountedObject<webrtc::internal::CapturerTrackSource>(
+              producer_impl->VideoSource()));
+
   scoped_refptr<RTCVideoSourceImpl> source = scoped_refptr<RTCVideoSourceImpl>(
       new RefCountedObject<RTCVideoSourceImpl>(rtc_source_track));
   return source;

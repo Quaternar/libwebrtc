@@ -11,6 +11,8 @@
 #include "rtc_mediaconstraints.h"
 #include "rtc_video_device.h"
 #include "rtc_video_source.h"
+#include "rtc_video_processor.h"
+#include "rtc_video_producer.h"
 
 namespace libwebrtc {
 
@@ -34,6 +36,7 @@ class RTCPeerConnectionFactory : public RefCountInterface {
   virtual scoped_refptr<RTCAudioDevice> GetAudioDevice() = 0;
 
   virtual scoped_refptr<RTCVideoDevice> GetVideoDevice() = 0;
+
 #ifdef RTC_DESKTOP_DEVICE
   virtual scoped_refptr<RTCDesktopDevice> GetDesktopDevice() = 0;
 #endif
@@ -42,7 +45,13 @@ class RTCPeerConnectionFactory : public RefCountInterface {
 
   virtual scoped_refptr<RTCVideoSource> CreateVideoSource(
       scoped_refptr<RTCVideoCapturer> capturer, const string video_source_label,
-      scoped_refptr<RTCMediaConstraints> constraints) = 0;
+      scoped_refptr<RTCMediaConstraints> constraints,
+      scoped_refptr<RTCVideoProcessor> processor = nullptr) = 0;
+
+  virtual scoped_refptr<RTCVideoProducer> CreateVideoProducer() = 0;
+  virtual scoped_refptr<RTCVideoSource> CreateVideoSource(
+      scoped_refptr<RTCVideoProducer> producer) = 0;
+
 #ifdef RTC_DESKTOP_DEVICE
   virtual scoped_refptr<RTCVideoSource> CreateDesktopSource(
       scoped_refptr<RTCDesktopCapturer> capturer,

@@ -56,14 +56,15 @@ class CapturerTrackSource : public webrtc::VideoTrackSource {
       rtc::Thread* worker_thread);
 
  public:
-  explicit CapturerTrackSource(std::shared_ptr<VideoCapturer> capturer)
+  explicit CapturerTrackSource(
+      std::shared_ptr<rtc::VideoSourceInterface<VideoFrame>> capturer)
       : VideoTrackSource(/*remote=*/false), capturer_(capturer) {}
 
  private:
   rtc::VideoSourceInterface<webrtc::VideoFrame>* source() override {
     return capturer_.get();
   }
-  std::shared_ptr<VideoCapturer> capturer_;
+  std::shared_ptr<rtc::VideoSourceInterface<VideoFrame>> capturer_;
 };
 }  // namespace internal
 }  // namespace webrtc
