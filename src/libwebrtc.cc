@@ -4,6 +4,7 @@
 #include "rtc_base/ssl_adapter.h"
 #include "rtc_base/thread.h"
 #include "rtc_peerconnection_factory_impl.h"
+#include "rtc_base/logging.h"
 
 namespace libwebrtc {
 
@@ -11,11 +12,14 @@ namespace libwebrtc {
 static bool g_is_initialized = false;
 
 // Initializes SSL, if not initialized.
-bool LibWebRTC::Initialize() {
+bool LibWebRTC::Initialize(LoggingSeverity level) {
   if (!g_is_initialized) {
     rtc::InitializeSSL();
     g_is_initialized = true;
   }
+
+  rtc::LogMessage::LogToDebug(
+      static_cast<rtc::LoggingSeverity>(level));
   return g_is_initialized;
 }
 
